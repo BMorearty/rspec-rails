@@ -60,16 +60,16 @@ module RSpec::Rails
                          controller_class :
                          root_controller
 
-        metadata[:example_group][:described_class] = Class.new(base_class) do
+        anonymous_controller = metadata[:example_group][:described_class] = Class.new(base_class) do
           def self.name; "AnonymousController"; end
         end
-        metadata[:example_group][:described_class].class_eval(&body)
+        anonymous_controller.class_eval(&body)
 
         before do
           @orig_routes = self.routes
-          self.routes  = ActionDispatch::Routing::RouteSet.new.tap { |r|
-            r.draw { resources :anonymous }
-          }
+          self.routes = anonymous_routes = ActionDispatch::Routing::RouteSet.new
+          self.routes.draw { resources :anonymous }
+          anonymous_controller.send(:define_method, :_routes) { anonymous_routes }
         end
 
         after do
